@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CNC Helfer</title>
@@ -7,44 +7,74 @@
 <style>
 
 body{
-font-family: Arial;
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI";
+background:#eef1f5;
+}
+
+.container{
+max-width:700px;
+margin:auto;
 padding:20px;
-background:#f2f2f2;
 }
 
 .card{
 background:white;
 padding:20px;
-border-radius:15px;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-max-width:500px;
-margin:auto;
+border-radius:18px;
+box-shadow:0 10px 25px rgba(0,0,0,0.08);
+margin-bottom:20px;
 }
 
-input{
+h1{
+text-align:center;
+}
+
+input,select{
 width:100%;
-padding:12px;
+padding:14px;
 margin-top:10px;
-border-radius:10px;
-border:1px solid #ccc;
+border-radius:12px;
+border:1px solid #d0d6dc;
 font-size:18px;
 }
 
 button{
 width:100%;
-padding:15px;
-margin-top:20px;
+padding:16px;
+margin-top:15px;
 border:none;
-border-radius:12px;
+border-radius:14px;
 background:#007AFF;
 color:white;
 font-size:20px;
+font-weight:bold;
+}
+
+button:hover{
+opacity:0.9;
 }
 
 .result{
-margin-top:20px;
-font-size:20px;
+margin-top:15px;
+font-size:18px;
 font-weight:bold;
+}
+
+.hidden{
+display:none;
+}
+
+.menuButton{
+padding:18px;
+font-size:20px;
+margin-top:10px;
+background:#34C759;
+}
+
+.back{
+background:#999;
+margin-bottom:10px;
 }
 
 </style>
@@ -52,38 +82,170 @@ font-weight:bold;
 
 <body>
 
+<!-- LOGIN -->
+
+<div class="container" id="loginBox">
+
 <div class="card">
+<h2>🔐 CNC Helfer</h2>
 
-<h1>CNC Helfer</h1>
+<input id="password" type="password" placeholder="Passwort">
 
-<h2>Bohrgitter Rechner</h2>
+<button onclick="checkPassword()">Login</button>
 
-<input id="x" placeholder="X Länge (mm)">
-<input id="y" placeholder="Y Länge (mm)">
-<input id="tool" placeholder="Werkzeug Ø">
-<input id="steg" placeholder="Steg">
-
-<button onclick="calc()">Berechnen</button>
-
-<div class="result" id="result"></div>
+<p id="error" style="color:red;"></p>
+</div>
 
 </div>
 
+
+
+<!-- APP -->
+
+<div class="container hidden" id="app">
+
+<h1>CNC Helfer</h1>
+
+<!-- HAUPTMENÜ -->
+
+<div id="menu">
+
+<div class="card">
+<button class="menuButton" onclick="openPage('bohren')">
+🛠 Bohren
+</button>
+
+<button class="menuButton" onclick="openPage('gewinde')">
+🔩 Gewinde
+</button>
+</div>
+
+</div>
+
+
+<!-- BOHREN -->
+
+<div id="bohren" class="hidden">
+
+<button class="back" onclick="goBack()">← Zurück</button>
+
+<div class="card">
+<h2>Bohrgitter</h2>
+
+<input id="bx" placeholder="X Länge mm">
+<input id="by" placeholder="Y Länge mm">
+<input id="btool" placeholder="Werkzeug Ø">
+<input id="bsteg" placeholder="Steg">
+
+<button onclick="calcBohr()">Berechnen</button>
+
+<div class="result" id="bohrResult"></div>
+
+</div>
+
+</div>
+
+
+<!-- GEWINDE -->
+
+<div id="gewinde" class="hidden">
+
+<button class="back" onclick="goBack()">← Zurück</button>
+
+<div class="card">
+
+<h2>Gewindegitter</h2>
+
+<select id="threadType">
+<option value="1">Gewindeschneiden</option>
+<option value="2">Gewindeformen</option>
+</select>
+
+<select id="threadSize">
+<option value="4,0.7">M4</option>
+<option value="5,0.8">M5</option>
+<option value="6,1">M6</option>
+<option value="8,1.25">M8</option>
+<option value="10,1.5">M10</option>
+<option value="12,1.75">M12</option>
+</select>
+
+<input id="gx" placeholder="X Länge mm">
+<input id="gy" placeholder="Y Länge mm">
+
+<button onclick="calcGewinde()">Berechnen</button>
+
+<div class="result" id="gewindeResult"></div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
 <script>
 
-function calc(){
+// PASSWORT
+const correctPassword="cnc123";
 
-let x=parseFloat(document.getElementById("x").value);
-let y=parseFloat(document.getElementById("y").value);
-let t=parseFloat(document.getElementById("tool").value);
-let s=parseFloat(document.getElementById("steg").value);
+function checkPassword(){
 
-if(!x||!y||!t){
-document.getElementById("result").innerHTML="Bitte Werte eingeben";
+let entered=document.getElementById("password").value;
+
+if(entered===correctPassword){
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").classList.remove("hidden");
+
+}else{
+
+document.getElementById("error").innerText="Falsches Passwort!";
+}
+
+}
+
+
+// NAVIGATION
+
+function openPage(id){
+
+document.getElementById("menu").style.display="none";
+
+document.getElementById("bohren").classList.add("hidden");
+document.getElementById("gewinde").classList.add("hidden");
+
+document.getElementById(id).classList.remove("hidden");
+
+}
+
+function goBack(){
+
+document.getElementById("menu").style.display="block";
+
+document.getElementById("bohren").classList.add("hidden");
+document.getElementById("gewinde").classList.add("hidden");
+
+}
+
+
+
+// BOHRGITTER
+
+function calcBohr(){
+
+let x=parseFloat(document.getElementById("bx").value);
+let y=parseFloat(document.getElementById("by").value);
+let tool=parseFloat(document.getElementById("btool").value);
+let steg=parseFloat(document.getElementById("bsteg").value);
+
+if(!x||!y||!tool){
+bohrResult.innerHTML="Bitte Werte eingeben";
 return;
 }
 
-let raster=t+s;
+let raster=tool+steg;
 
 let countX=Math.floor(x/raster);
 let countY=Math.floor(y/raster);
@@ -91,11 +253,45 @@ let countY=Math.floor(y/raster);
 let startX=(x-(countX-1)*raster)/2;
 let startY=(y-(countY-1)*raster)/2;
 
-document.getElementById("result").innerHTML=
-`
+bohrResult.innerHTML=`
 Raster: ${raster.toFixed(2)} mm<br>
 X Bohrungen: ${countX}<br>
 Y Bohrungen: ${countY}<br>
+Start X: ${startX.toFixed(2)}<br>
+Start Y: ${startY.toFixed(2)}
+`;
+
+}
+
+
+
+// GEWINDE
+
+function calcGewinde(){
+
+let type=parseFloat(document.getElementById("threadType").value);
+
+let data=document.getElementById("threadSize").value.split(",");
+
+let diameter=parseFloat(data[0]);
+let pitch=parseFloat(data[1]);
+
+let x=parseFloat(document.getElementById("gx").value);
+let y=parseFloat(document.getElementById("gy").value);
+
+let spacing=pitch*type;
+let raster=diameter+spacing;
+
+let countX=Math.floor(x/raster);
+let countY=Math.floor(y/raster);
+
+let startX=(x-(countX-1)*raster)/2;
+let startY=(y-(countY-1)*raster)/2;
+
+gewindeResult.innerHTML=`
+Achsabstand: ${raster.toFixed(2)} mm<br>
+X Gewinde: ${countX}<br>
+Y Gewinde: ${countY}<br>
 Start X: ${startX.toFixed(2)}<br>
 Start Y: ${startY.toFixed(2)}
 `;
