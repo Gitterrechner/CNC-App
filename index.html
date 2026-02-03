@@ -4,6 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CNC Helfer</title>
 
+<link rel="manifest" href="manifest.json">
+
 <style>
 
 body{
@@ -26,8 +28,6 @@ box-shadow:0 10px 25px rgba(0,0,0,0.08);
 margin-bottom:20px;
 }
 
-h1{text-align:center;}
-
 input,select{
 width:100%;
 padding:14px;
@@ -49,18 +49,6 @@ font-size:20px;
 font-weight:bold;
 }
 
-.menuButton{
-padding:18px;
-font-size:20px;
-margin-top:10px;
-background:#34C759;
-}
-
-.back{
-background:#999;
-margin-bottom:10px;
-}
-
 .result{
 margin-top:15px;
 font-size:18px;
@@ -69,130 +57,80 @@ font-weight:bold;
 
 .hidden{display:none;}
 
+.diagram{
+background:#f7f9fb;
+padding:10px;
+border-radius:12px;
+margin-top:10px;
+font-size:14px;
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-
-<div class="container" id="loginBox">
-<div class="card">
-<h2>🔐 CNC Helfer</h2>
-
-<input id="password" type="password" placeholder="Passwort">
-<button onclick="checkPassword()">Login</button>
-
-<p id="error" style="color:red;"></p>
-</div>
-</div>
-
-
-
-<div class="container hidden" id="app">
+<div class="container">
 
 <h1>CNC Helfer</h1>
 
-<!-- MENU -->
+<!-- LOGIN -->
 
-<div id="menu">
-
-<div class="card">
-<button class="menuButton" onclick="openPage('bohren')">🛠 Bohren</button>
-<button class="menuButton" onclick="openPage('gewinde')">🔩 Gewinde</button>
+<div id="loginBox" class="card">
+<h2>🔐 Passwort</h2>
+<input id="password" type="password">
+<button onclick="login()">Login</button>
 </div>
 
-</div>
+<!-- APP -->
 
-
-
-<!-- BOHREN -->
-
-<div id="bohren" class="hidden">
-
-<button class="back" onclick="goBack()">← Zurück</button>
+<div id="app" class="hidden">
 
 <div class="card">
 
-<h2>Bohren</h2>
+<h2>Bohren / Gewinde</h2>
 
-<select id="bohrMode">
+<select id="mode">
 <option value="grid">Gitter</option>
 <option value="circle">Lochkreis</option>
 </select>
 
-<div id="bohrGrid">
-
-<input id="bx" placeholder="X Länge mm">
-<input id="by" placeholder="Y Länge mm">
-<input id="btool" placeholder="Werkzeug Ø">
-<input id="bsteg" placeholder="Steg">
+<select id="process">
+<option value="bohren">Bohren</option>
+<option value="gewinde">Gewinde</option>
+</select>
 
 </div>
 
-<div id="bohrCircle" class="hidden">
-
-<input id="bdurchmesser" placeholder="Werkstück Ø">
-<input id="btool2" placeholder="Werkzeug Ø">
-<input id="bsteg2" placeholder="Steg">
-
-</div>
-
-<button onclick="calcBohr()">Berechnen</button>
-
-<div class="result" id="bohrResult"></div>
-
-</div>
-
-</div>
-
-
-
-<!-- GEWINDE -->
-
-<div id="gewinde" class="hidden">
-
-<button class="back" onclick="goBack()">← Zurück</button>
 
 <div class="card">
 
-<h2>Gewinde</h2>
+<h3>Parameter</h3>
 
-<select id="gewindeMode">
-<option value="grid">Gitter</option>
-<option value="circle">Lochkreis</option>
-</select>
+<input id="x" placeholder="X Länge">
+<input id="y" placeholder="Y Länge">
 
-<select id="threadType">
-<option value="1">Gewindeschneiden</option>
-<option value="2">Gewindeformen</option>
-</select>
+<input id="diameter" placeholder="Werkzeug / Gewinde Ø">
 
-<select id="threadSize">
-<option value="4,0.7">M4</option>
-<option value="5,0.8">M5</option>
-<option value="6,1">M6</option>
-<option value="8,1.25">M8</option>
-<option value="10,1.5">M10</option>
-<option value="12,1.75">M12</option>
-</select>
+<input id="pitch" placeholder="Steigung / Steg">
 
-<div id="gewindeGrid">
+<input id="workpiece" placeholder="Werkstück Ø (nur Lochkreis)">
 
-<input id="gx" placeholder="X Länge mm">
-<input id="gy" placeholder="Y Länge mm">
+<button onclick="calc()">Berechnen</button>
 
-</div>
+<div class="result" id="result"></div>
 
-<div id="gewindeCircle" class="hidden">
+<div class="diagram">
 
-<input id="gdurchmesser" placeholder="Werkstück Ø">
+<b>Erklärung:</b><br><br>
 
-</div>
+<b>X / Y</b> = Bauteilgröße<br>
+<b>Achsabstand</b> = Mitte zu Mitte<br>
+<b>Raster</b> = Werkzeug + Steg / Gewinde + Abstand<br><br>
 
-<button onclick="calcGewinde()">Berechnen</button>
-
-<div class="result" id="gewindeResult"></div>
+<b>Lochkreis:</b><br>
+Radius = Werkstück / 2<br>
+Winkelschritt = 360° / Anzahl
 
 </div>
 
@@ -200,71 +138,60 @@ font-weight:bold;
 
 </div>
 
+</div>
 
 
 <script>
 
-// Passwort
-const correctPassword="cnc123";
+// SERVICE WORKER
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('service-worker.js');
+}
 
-function checkPassword(){
 
-if(document.getElementById("password").value===correctPassword){
+// LOGIN MIT SPEICHER
+
+const PASS="cnc123";
+
+if(localStorage.getItem("logged")=="yes"){
+loginBox.style.display="none";
+app.classList.remove("hidden");
+}
+
+function login(){
+
+if(password.value===PASS){
+
+localStorage.setItem("logged","yes");
 
 loginBox.style.display="none";
 app.classList.remove("hidden");
 
-}else{
-error.innerText="Falsches Passwort!";
 }
-
-}
-
-// Navigation
-function openPage(id){
-
-menu.style.display="none";
-
-bohren.classList.add("hidden");
-gewinde.classList.add("hidden");
-
-document.getElementById(id).classList.remove("hidden");
-
-}
-
-function goBack(){
-
-menu.style.display="block";
-bohren.classList.add("hidden");
-gewinde.classList.add("hidden");
-
-}
-
-// Mode Toggle
-
-bohrMode.onchange=()=>{
-bohrGrid.classList.toggle("hidden",bohrMode.value!=="grid");
-bohrCircle.classList.toggle("hidden",bohrMode.value!=="circle");
-}
-
-gewindeMode.onchange=()=>{
-gewindeGrid.classList.toggle("hidden",gewindeMode.value!=="grid");
-gewindeCircle.classList.toggle("hidden",gewindeMode.value!=="circle");
 }
 
 
-// BOHREN
 
-function calcBohr(){
+// CNC RECHNER
 
-if(bohrMode.value==="grid"){
+function calc(){
 
-let x=parseFloat(bx.value);
-let y=parseFloat(by.value);
-let tool=parseFloat(btool.value);
-let steg=parseFloat(bsteg.value);
+let mode=document.getElementById("mode").value;
+let process=document.getElementById("process").value;
 
-let raster=tool+steg;
+let x=parseFloat(document.getElementById("x").value);
+let y=parseFloat(document.getElementById("y").value);
+let dia=parseFloat(document.getElementById("diameter").value);
+let pitch=parseFloat(document.getElementById("pitch").value);
+let wp=parseFloat(document.getElementById("workpiece").value);
+
+if(process==="gewinde"){
+pitch=pitch*(2); // default formen
+}
+
+let raster=dia+pitch;
+
+if(mode==="grid"){
 
 let cx=Math.floor(x/raster);
 let cy=Math.floor(y/raster);
@@ -272,7 +199,7 @@ let cy=Math.floor(y/raster);
 let sx=(x-(cx-1)*raster)/2;
 let sy=(y-(cy-1)*raster)/2;
 
-bohrResult.innerHTML=`
+result.innerHTML=`
 Raster: ${raster.toFixed(2)} mm<br>
 X: ${cx} | Y: ${cy}<br>
 Start X: ${sx.toFixed(2)}<br>
@@ -281,73 +208,15 @@ Start Y: ${sy.toFixed(2)}
 
 }else{
 
-let d=parseFloat(bdurchmesser.value);
-let tool=parseFloat(btool2.value);
-let steg=parseFloat(bsteg2.value);
-
-let raster=tool+steg;
-let radius=(d/2)-(tool/2);
-
+let radius=wp/2;
 let umfang=2*Math.PI*radius;
-let count=Math.floor(umfang/raster);
 
-let angle=360/count;
-
-bohrResult.innerHTML=`
-Radius: ${radius.toFixed(2)} mm<br>
-Bohrungen: ${count}<br>
-Winkelschritt: ${angle.toFixed(2)}°
-`;
-
-}
-
-}
-
-
-
-// GEWINDE
-
-function calcGewinde(){
-
-let type=parseFloat(threadType.value);
-let data=threadSize.value.split(",");
-
-let dia=parseFloat(data[0]);
-let pitch=parseFloat(data[1]);
-
-let spacing=pitch*type;
-let raster=dia+spacing;
-
-if(gewindeMode.value==="grid"){
-
-let x=parseFloat(gx.value);
-let y=parseFloat(gy.value);
-
-let cx=Math.floor(x/raster);
-let cy=Math.floor(y/raster);
-
-let sx=(x-(cx-1)*raster)/2;
-let sy=(y-(cy-1)*raster)/2;
-
-gewindeResult.innerHTML=`
-Achsabstand: ${raster.toFixed(2)} mm<br>
-X: ${cx} | Y: ${cy}<br>
-Start X: ${sx.toFixed(2)}<br>
-Start Y: ${sy.toFixed(2)}
-`;
-
-}else{
-
-let d=parseFloat(gdurchmesser.value);
-let radius=d/2;
-
-let umfang=2*Math.PI*radius;
 let count=Math.floor(umfang/raster);
 let angle=360/count;
 
-gewindeResult.innerHTML=`
+result.innerHTML=`
 Radius: ${radius.toFixed(2)} mm<br>
-Gewinde: ${count}<br>
+Anzahl: ${count}<br>
 Winkelschritt: ${angle.toFixed(2)}°
 `;
 
