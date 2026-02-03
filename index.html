@@ -4,8 +4,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CNC Helfer</title>
 
-<link rel="manifest" href="manifest.json">
-
 <style>
 
 body{
@@ -88,7 +86,7 @@ font-size:14px;
 
 <div class="card">
 
-<h2>Bohren / Gewinde</h2>
+<h2>Berechnungsart</h2>
 
 <select id="mode">
 <option value="grid">Gitter</option>
@@ -98,6 +96,13 @@ font-size:14px;
 <select id="process">
 <option value="bohren">Bohren</option>
 <option value="gewinde">Gewinde</option>
+</select>
+
+<!-- NEU -->
+<select id="threadMethod">
+<option value="1">Gewindeschneiden (1x Steigung)</option>
+<option value="2">Gewindeformen (2x Steigung)</option>
+<option value="custom">Freie Steigung</option>
 </select>
 
 </div>
@@ -143,14 +148,7 @@ Winkelschritt = 360° / Anzahl
 
 <script>
 
-// SERVICE WORKER
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('service-worker.js');
-}
-
-
-// LOGIN MIT SPEICHER
-
+// LOGIN speichern
 const PASS="cnc123";
 
 if(localStorage.getItem("logged")=="yes"){
@@ -161,32 +159,39 @@ app.classList.remove("hidden");
 function login(){
 
 if(password.value===PASS){
-
 localStorage.setItem("logged","yes");
-
 loginBox.style.display="none";
 app.classList.remove("hidden");
-
-}
 }
 
+}
 
 
-// CNC RECHNER
+// CNC Rechner
 
 function calc(){
 
-let mode=document.getElementById("mode").value;
-let process=document.getElementById("process").value;
+let mode=modeSelect("mode");
+let process=modeSelect("process");
+let method=modeSelect("threadMethod");
 
-let x=parseFloat(document.getElementById("x").value);
-let y=parseFloat(document.getElementById("y").value);
-let dia=parseFloat(document.getElementById("diameter").value);
-let pitch=parseFloat(document.getElementById("pitch").value);
-let wp=parseFloat(document.getElementById("workpiece").value);
+let x=parseFloat(val("x"));
+let y=parseFloat(val("y"));
+let dia=parseFloat(val("diameter"));
+let pitch=parseFloat(val("pitch"));
+let wp=parseFloat(val("workpiece"));
 
+// Gewinde Logik
 if(process==="gewinde"){
-pitch=pitch*(2); // default formen
+
+if(method==="1"){
+pitch=pitch*1;
+}
+else if(method==="2"){
+pitch=pitch*2;
+}
+// custom bleibt unverändert
+
 }
 
 let raster=dia+pitch;
@@ -222,6 +227,15 @@ Winkelschritt: ${angle.toFixed(2)}°
 
 }
 
+}
+
+// Helpers
+function val(id){
+return document.getElementById(id).value;
+}
+
+function modeSelect(id){
+return document.getElementById(id).value;
 }
 
 </script>
