@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CNC Helfer</title>
+
+<style>
+
+body{
+font-family: Arial;
+padding:20px;
+background:#f2f2f2;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:15px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+max-width:500px;
+margin:auto;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:10px;
+border:1px solid #ccc;
+font-size:18px;
+}
+
+button{
+width:100%;
+padding:15px;
+margin-top:20px;
+border:none;
+border-radius:12px;
+background:#007AFF;
+color:white;
+font-size:20px;
+}
+
+.result{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>CNC Helfer</h1>
+
+<h2>Bohrgitter Rechner</h2>
+
+<input id="x" placeholder="X Länge (mm)">
+<input id="y" placeholder="Y Länge (mm)">
+<input id="tool" placeholder="Werkzeug Ø">
+<input id="steg" placeholder="Steg">
+
+<button onclick="calc()">Berechnen</button>
+
+<div class="result" id="result"></div>
+
+</div>
+
+<script>
+
+function calc(){
+
+let x=parseFloat(document.getElementById("x").value);
+let y=parseFloat(document.getElementById("y").value);
+let t=parseFloat(document.getElementById("tool").value);
+let s=parseFloat(document.getElementById("steg").value);
+
+if(!x||!y||!t){
+document.getElementById("result").innerHTML="Bitte Werte eingeben";
+return;
+}
+
+let raster=t+s;
+
+let countX=Math.floor(x/raster);
+let countY=Math.floor(y/raster);
+
+let startX=(x-(countX-1)*raster)/2;
+let startY=(y-(countY-1)*raster)/2;
+
+document.getElementById("result").innerHTML=
+`
+Raster: ${raster.toFixed(2)} mm<br>
+X Bohrungen: ${countX}<br>
+Y Bohrungen: ${countY}<br>
+Start X: ${startX.toFixed(2)}<br>
+Start Y: ${startY.toFixed(2)}
+`;
+
+}
+
+</script>
+
+</body>
+</html>
